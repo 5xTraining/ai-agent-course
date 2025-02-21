@@ -1,46 +1,6 @@
 import requests
 import math
 
-get_nearby_youbike_tool = {
-    "type": "function",
-    "function": {
-        "name": "get_nearby_youbike",
-        "description": "取得指定經緯度座標附近可租借的 Youbike 站點",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "lat": {
-                    "type": "number",
-                    "description": "緯度 Latitude",
-                },
-                "lon": {
-                    "type": "number",
-                    "description": "經度 longitude",
-                },
-                "radius": {
-                    "type": "number",
-                    "description": "範圍半徑，以公尺為單位",
-                    "default": 500,
-                    "minimum": 0,
-                },
-                "available_amount": {
-                    "type": "number",
-                    "description": "可以租借的 Youbike 數量",
-                    "default": 0,
-                    "minimum": 0,
-                },
-                "limit": {
-                    "type": "number",
-                    "description": "顯示筆數",
-                    "default": 3,
-                },
-            },
-            "additionalProperties": False,
-            "required": ["lat", "lon"],
-        },
-    },
-}
-
 
 # 計算兩個經緯度之間的距離（Haversine 公式）
 def haversine(
@@ -72,6 +32,17 @@ def get_nearby_youbike(
     available_amount: int = 0,
     limit: int = 3,
 ):
+    """
+    取得指定經緯度座標附近可租借的 Youbike 站點
+
+    參數：
+      - lat: 緯度 Latitude
+      - lon: 經度 longitude
+      - radius: 範圍半徑，以公尺為單位, 預設值為 500
+      - available_amount: 可以租借的 Youbike 數量, 預設值為 0
+      - limit: 顯示筆數, 預設值為 3
+    """
+
     url = "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json"
     response = requests.get(url)
     data = response.json()

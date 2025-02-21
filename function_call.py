@@ -1,13 +1,14 @@
 from message_db import init_message, get_messages, add_message
-from tools.weather import get_weather, get_weather_tool
-from tools.youbike import get_nearby_youbike, get_nearby_youbike_tool
+from tools import get_weather, get_nearby_youbike, get_current_time
 from llm.openai import client
 from utils.spinner import spinner
+from utils.func_tool import function_to_json
 import json
 
 AVAILABLE_TOOLS = {
     "get_weather": get_weather,
     "get_nearby_youbike": get_nearby_youbike,
+    "get_current_time": get_current_time,
 }
 MODEL_NAME = "gpt-4o-mini"
 
@@ -18,7 +19,7 @@ init_message(
     """
 )
 
-tools = [get_weather_tool, get_nearby_youbike_tool]
+TOOLS = [function_to_json(fn) for fn in AVAILABLE_TOOLS.values()]
 
 print("哈囉，請問有什麼事嗎？")
 
@@ -39,7 +40,7 @@ try:
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=get_messages(),
-            tools=tools,
+            tools=TOOLS,
             tool_choice="auto",
         )
 
