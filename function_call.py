@@ -1,5 +1,5 @@
 from message_db import init_message, get_messages, add_message
-from tools import get_weather, get_nearby_youbike, get_current_time
+from tools import get_weather, get_nearby_youbike, get_current_time, search_netflix
 from llm.openai import client
 from utils.spinner import spinner
 from utils.func_tool import function_to_json
@@ -9,13 +9,16 @@ AVAILABLE_TOOLS = {
     "get_weather": get_weather,
     "get_nearby_youbike": get_nearby_youbike,
     "get_current_time": get_current_time,
+    "search_netflix": search_netflix,
 }
 MODEL_NAME = "gpt-4o-mini"
 
 init_message(
     """
-    你是位厲害的助理，回答問題的時候一律使用**繁體中文**
-    如果回答有中英文混雜，且在中文字與英文或數字之間多加空白字元
+    - 你是位厲害的助理，回答問題的時候一律使用**台灣繁體中文**
+    - 如果是英文的資訊，可以盡量幫我翻譯成**台灣繁體中文**
+    - 若回答內容有中英文、數字混合，在中文字與英文及數字之間多加空白
+    - 你只能回答使用者提供的工具能處理的請求，如果使用者的請求不在這些工具範圍內，你必須拒絕並回覆
     """
 )
 
