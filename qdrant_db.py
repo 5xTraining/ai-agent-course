@@ -62,3 +62,13 @@ class QdrantDB:
             # 每 N 筆寫入資料庫
             if len(self.batch) >= BATCH_SIZE:
                 self.flush()
+
+    def search(self, query, limit=5):
+        query_vector = get_embedding(query)
+        search_result = self.client.search(
+            collection_name=self.collection_name,
+            query_vector=query_vector,
+            limit=limit,
+        )
+
+        return [result.payload for result in search_result]
