@@ -8,6 +8,7 @@ dependencies = [
     "halo>=0.0.31",
     "openai>=1.90.0",
     "prompt-toolkit>=3.0.51",
+    "pymupdf>=1.26.1",
     "qdrant-client>=1.14.3",
     "requests>=2.32.4",
     "tinydb>=4.8.2",
