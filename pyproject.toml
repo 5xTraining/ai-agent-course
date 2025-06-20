@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13.5"
-dependencies = []
+dependencies = [
+    "openai>=1.90.0",
+    "prompt-toolkit>=3.0.51",
+]
 
 [dependency-groups]
 dev = [
