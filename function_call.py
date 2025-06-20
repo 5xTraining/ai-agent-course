@@ -1,62 +1,84 @@
-from db.messages import init_message, add_message, get_messages
+from db.messages import init_message, get_messages, add_message
+from tools.weather import get_weather, get_weather_tool
+from tools.youbike import get_nearby_youbike, get_nearby_youbike_tool
 from lib.openai import client
-from tools.weather import get_weather
 from utils.spinner import spinner
+from prompt_toolkit import prompt
 import json
 
-init_message("你是一位聰明的助理，回答問題的時候請一律使用**台灣繁體中文**")
-add_message("今天台北的天氣如何？")  # 為求方便，先固定問題
+MODEL_NAME = "gpt-4.1-nano"
 
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_weather",
-            "description": "取得指定城市的即時天氣資訊，包括溫度、濕度、天氣狀況等。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "city": {
-                        "type": "string",
-                        "description": "城市名稱（英文），如 Taipei 或 Tokyo",
-                    }
-                },
-                "additionalProperties": False,
-                "required": ["city"],
-            },
-        },
-    }
-]
+AVAILABLE_TOOLS = {
+    "get_weather": get_weather,
+    "get_nearby_youbike": get_nearby_youbike,
+}
 
-AVAILABLE_TOOLS = {"get_weather": get_weather}
-
-spinner.start()
-completion = client.chat.completions.create(
-    model="gpt-4.1-nano",  # 選擇便宜的模型
-    messages=get_messages(),
-    tools=tools,
-    tool_choice="auto",
+init_message(
+    """
+    你是位厲害的助理，回答問題的時候一律使用**台灣繁體中文**
+    不需要幫我進行翻譯，不過如果回答有中英文混雜，在中文字與英文或數字之間多加空白字元
+    """
 )
-spinner.stop()
 
-completion_message = completion.choices[0].message
-tool_calls = completion_message.tool_calls
+tools = [get_weather_tool, get_nearby_youbike_tool]
 
-if tool_calls:
-    for tool_call in tool_calls:
-        function_name = tool_call.function.name
-        arguments = tool_call.function.arguments
+print("哈囉，請問有什麼事嗎？")
 
-        fn = AVAILABLE_TOOLS.get(function_name)
-        if fn is None:
+try:
+    while True:
+        user_input = prompt("→ ").strip()
+
+        if user_input.lower() == "exit":
+            print("再會~")
+            break
+
+        if user_input == "":
             continue
 
-        try:
-            args = json.loads(arguments)
-        except json.JSONDecodeError:
-            args = {}
+        add_message(user_input)
 
-        result = fn(**args)
-        print(result)
-else:
-    print(completion_message.content)
+        spinner.start()
+        completion = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=get_messages(),
+            tools=tools,
+            tool_choice="auto",
+        )
+
+        completion_message = completion.choices[0].message
+        tool_calls = completion_message.tool_calls
+
+        if tool_calls:
+            add_message(tool_calls=tool_calls)
+
+            for tool_call in tool_calls:
+                function_name = tool_call.function.name
+                arguments = tool_call.function.arguments
+
+                fn = AVAILABLE_TOOLS.get(function_name)
+                if fn is None:  # 如果沒有可執行函數就跳過
+                    continue
+
+                try:
+                    args = json.loads(arguments)
+                except json.JSONDecodeError:
+                    args = {}
+
+                result = fn(**args)  # 執行工具！
+                add_message(result, tool_call_id=tool_call.id)
+            spinner.succeed("取得資料")
+
+            # 把函數的回傳值交給 LLM 組織成適合人類看的答案
+            spinner.start()
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=get_messages(),
+            )
+            spinner.stop()
+            print(response.choices[0].message.content)
+        else:
+            add_message(completion_message.content, role="assistant")
+            spinner.stop()
+            print(completion_message.content)
+except EOFError:
+    print("再會~")
