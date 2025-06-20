@@ -1,6 +1,2 @@
-def main():
-    print("Hello from ai-agent-v3!")
-
-
-if __name__ == "__main__":
-    main()
+from config import OPENAI_API_KEY
+print(OPENAI_API_KEY)
